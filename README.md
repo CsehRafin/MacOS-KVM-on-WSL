@@ -22,6 +22,15 @@ git clone https://github.com/CsehRafin/MacOS-KVM-on-WSL.git
 ```
 then do :
 ```
+echo 1 | sudo tee /sys/module/kvm/parameters/ignore_msrs
+```
+then do :
+```
+sudo cp kvm.conf /etc/modprobe.d/kvm.conf # after cloning the repo below
+```
+then :
+
+```
 cd MacOS-KVM-on-WSL
 ```
 then :
