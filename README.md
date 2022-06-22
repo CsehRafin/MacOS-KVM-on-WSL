@@ -1,6 +1,9 @@
 ## WSL :
-So first thing you have to do is :
-check for these System Requirements 
+Download these packages on your system (ubuntu, alpine, arch,debain etc)
+
+qemu uml-utilities virt-manager git wget libguestfs-tools p7zip-full make dmg2img 
+
+##check for these System Requirements 
 * A modern Linux distribution. E.g. Ubuntu 20.04 LTS 64-bit or later.
 
 * QEMU >= 4.2.0
@@ -30,3 +33,4 @@ then do :
 ./OpenCore-Boot.sh
 ```
 You're Done! to reuse the VM just enter / cd the Folder and then do ./OpenCore-Boot.sh
+to see the GUI interface of the KVM connect to localhost:5999 or 127.0.0.1:5999
