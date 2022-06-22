@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <pkg-ref id="MajorOSInfo" packageIdentifier="com.apple.pkg.MajorOSInfo"/>
+    <pkg-ref id="InstallAssistant" packageIdentifier="com.apple.pkg.InstallAssistant.macOSMonterey"/>
+    <pkg-ref id="BuildManifest.plist" packageIdentifier="com.apple.plist.BuildManifest"/>
+    <pkg-ref id="InstallInfo.plist" packageIdentifier="com.apple.plist.InstallInfo"/>
+    <pkg-ref id="UpdateBrain.zip" packageIdentifier="com.apple.zip.UpdateBrain"/>
+    <pkg-ref id="Info.plist" packageIdentifier="com.apple.plist.Info"/>
+    <title>macOS Monterey</title>
+    <product-generator name="IASUProductGenerator" version="20"/>
+    <options visibleOnlyForPredicate="true" customize="false" rootVolumeOnly="true" major-os-update="true" require-scripts="true"/>
+    <volume-check script="">
+        <allowed-os-versions>
+            <os-version min="10.9"/>
+        </allowed-os-versions>
+    </volume-check>
+    <auxinfo>
+        <dict>
+            <key>BUILD</key>
+            <string>21F2092</string>
+            <key>VERSION</key>
+            <string>12.4</string>
+        </dict>
+    </auxinfo>
+    <tags>
+        <tag>SUBUNDLE:com.apple.InstallAssistant.macOSMonterey</tag>
+        <tag>CUSTOMER</tag>
+    </tags>
+    <choices-outline>
+        <line choice="InstallAssistantAuto"/>
+    </choices-outline>
+    <choices-outline ui="MajorOSInfo">
+        <line choice="MajorOSInfo"/>
+    </choices-outline>
+    <choices-outline ui="SoftwareUpdate">
+        <line choice="InstallAssistantAuto"/>
+    </choices-outline>
+    <choices-outline ui="InstallAssistant">
+        <line choice="InstallAssistantShell"/>
+    </choices-outline>
+    <choice id="MajorOSInfo" title="macOS Monterey" start_enabled="true" start_selected="true">
+        <pkg-ref id="MajorOSInfo"/>
+    </choice>
+    <choice id="InstallAssistantAuto" start_enabled="true" start_selected="true" suDisabledGroupID="macOS Monterey" versStr="12.4" title="macOS Monterey">
+        <pkg-ref id="InstallAssistant"/>
+    </choice>
+    <choice id="InstallAssistantShell" title="macOS Monterey" start_enabled="true" start_selected="true">
+        <pkg-ref id="InstallAssistant"/>
+        <pkg-ref id="BuildManifest.plist"/>
+        <pkg-ref id="InstallInfo.plist"/>
+        <pkg-ref id="UpdateBrain.zip"/>
+        <pkg-ref id="Info.plist"/>
+    </choice>
+    <pkg-ref id="MajorOSInfo" auth="root" installKBytes="1270" version="21.5.2092">MajorOSInfo.pkg</pkg-ref>
+    <pkg-ref id="InstallAssistant" auth="root" installKBytes="41848" version="21.5.2092">InstallAssistant.pkg</pkg-ref>
+    <pkg-ref id="BuildManifest.plist" installKBytes="134" version="21.5.2092">BuildManifest.plist</pkg-ref>
+    <pkg-ref id="InstallInfo.plist" installKBytes="0" version="21.5.2092">InstallInfo.plist</pkg-ref>
+    <pkg-ref id="UpdateBrain.zip" installKBytes="3111" version="21.5.2092">UpdateBrain.zip</pkg-ref>
+    <pkg-ref id="Info.plist" installKBytes="2" version="21.5.2092">Info.plist</pkg-ref>
+    <script for="volume-check/@script"><![CDATA[
+var volumeCheck = function()
+{
+    if ( my.target == undefined )
+    {
+        my.result.message = "The target is nil.";
+        my.result.type = 'Fatal';
+        return false;
+    }
+    
+    var myTargetSystemVersion = (my.target.systemVersion || system.files.plistAtPath(my.target.mountpoint + "/System/Library/CoreServices/SystemVersion.plist"));
+    var minimumSupportedVersion = "10.9";
+    
+    if ( system.compareVersions(myTargetSystemVersion, minimumSupportedVersion) < 0 )
+    {
+        my.result.message = "The target volume is less than the minimum supported version: " + minimumSupportedVersion;
+        my.result.type = 'Fatal';
+        return false;
+    }
+    return true;
+}
+volumeCheck();
+]]></script>
+    <installation-check script=""/>
+    <script for="installation-check/@script"><![CDATA[
+var installCheck = function()
+{
+    var cpuFeatures = system.sysctl( 'machdep.cpu.features' );
+    if ( cpuFeatures != undefined )
+    {
+        cpuFeatures=cpuFeatures.split(" ");
+        for ( var i = 0; i < cpuFeatures.length; i++ )
+        {
+            if ( cpuFeatures[i] == "VMM" )
+            {
+                return true;
+            }
+        }
+    }
+    
+    var supportedBoardIDs = [];
+    
+    var supportedDeviceIDs = ['J493AP', 'J413AP'];
+    supportedDeviceIDs = supportedDeviceIDs.map(Function.prototype.call, String.prototype.toLowerCase);
+    
+    // Boolean to ensure that looking up a T2 system is supported
+    var bridgeOSLookupSupported = system.hasOwnProperty('bridge') && system.bridge.hasOwnProperty('deviceIdentity') &&  system.bridge.deviceIdentity.hasOwnProperty("hardwareModel") && system.bridge.hasOwnProperty('bridgeVersion') && system.bridge.hasOwnProperty('bridgeBuildGroup');
+    
+    // For modern hardware try out systems without BoardIDs.
+    var boardID = system.ioregistry.fromPath('IOService:/')['board-id'];
+    if ( boardID == undefined )
+    {
+        var hwTarget = system.sysctl("hw.target");
+        if ( hwTarget == undefined )
+        {
+            my.result.message = "The system has neither a boardID or a hw.target.";
+            my.result.type = 'Fatal';
+            return false;
+        }
+        else
+        {
+            if ( supportedDeviceIDs.indexOf(hwTarget.toLowerCase()) == -1 )
+            {
+                my.result.message = "The system is not in the supported deviceID list.";
+                my.result.type = 'Fatal';
+                return false;
+            }
+        }
+    }
+    // Next compare T2 devices against the list of supported deviceIDs.
+    // Non T2 systems will have a hardwareModel so also verify that the bridgeVersion is set
+    else if ( bridgeOSLookupSupported && system.bridge.deviceIdentity.hardwareModel != undefined && system.bridge.bridgeVersion != undefined )
+    {
+        var bridgeOSDeviceID = system.bridge.deviceIdentity.hardwareModel;
+        if ( supportedDeviceIDs.indexOf(bridgeOSDeviceID.toLowerCase()) == -1 )
+        {
+            my.result.message = "This T2 system is not in the supported deviceID list.";
+            my.result.type = 'Fatal';
+            return false;
+        }
+    }
+    // For legacy hardware T1 and older, we use boardIDs
+    else if ( supportedBoardIDs.indexOf(boardID) == -1 )
+    {
+        my.result.message = "The system is not in the supported boardID list.";
+        my.result.type = 'Fatal';
+        return false;
+    }
+    
+    return true;
+}
+installCheck();
+]]></script>
+</installer-gui-script>

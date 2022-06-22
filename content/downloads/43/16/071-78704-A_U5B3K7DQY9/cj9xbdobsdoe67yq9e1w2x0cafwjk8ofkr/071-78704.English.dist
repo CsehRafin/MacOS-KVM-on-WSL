@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?>
+<installer-gui-script minSpecVersion="2">
+    <pkg-ref id="InstallAssistant" packageIdentifier="com.apple.pkg.InstallAssistant.macOSBigSur"/>
+    <pkg-ref id="MajorOSInfo" packageIdentifier="com.apple.pkg.MajorOSInfo"/>
+    <pkg-ref id="Info.plist" packageIdentifier="com.apple.plist.Info"/>
+    <pkg-ref id="InstallInfo.plist" packageIdentifier="com.apple.plist.InstallInfo"/>
+    <pkg-ref id="UpdateBrain.zip" packageIdentifier="com.apple.zip.UpdateBrain"/>
+    <pkg-ref id="BuildManifest.plist" packageIdentifier="com.apple.plist.BuildManifest"/>
+    <title>macOS Big Sur</title>
+    <product-generator name="IASUProductGenerator" version="16"/>
+    <options visibleOnlyForPredicate="true" customize="false" rootVolumeOnly="true" major-os-update="true" require-scripts="true"/>
+    <volume-check script="">
+        <allowed-os-versions>
+            <os-version min="10.9"/>
+        </allowed-os-versions>
+    </volume-check>
+    <auxinfo>
+        <dict>
+            <key>BUILD</key>
+            <string>20G95</string>
+            <key>VERSION</key>
+            <string>11.5.2</string>
+        </dict>
+    </auxinfo>
+    <tags>
+        <tag>SUBUNDLE:com.apple.InstallAssistant.macOSBigSur</tag>
+        <tag>CUSTOMER</tag>
+    </tags>
+    <choices-outline>
+        <line choice="InstallAssistantAuto"/>
+    </choices-outline>
+    <choices-outline ui="MajorOSInfo">
+        <line choice="MajorOSInfo"/>
+    </choices-outline>
+    <choices-outline ui="SoftwareUpdate">
+        <line choice="InstallAssistantAuto"/>
+    </choices-outline>
+    <choices-outline ui="InstallAssistant">
+        <line choice="InstallAssistantShell"/>
+    </choices-outline>
+    <choice id="MajorOSInfo" title="macOS Big Sur" start_enabled="true" start_selected="true">
+        <pkg-ref id="MajorOSInfo"/>
+    </choice>
+    <choice id="InstallAssistantAuto" start_enabled="true" start_selected="true" suDisabledGroupID="macOS Big Sur" versStr="11.5.2" title="macOS Big Sur">
+        <pkg-ref id="InstallAssistant"/>
+    </choice>
+    <choice id="InstallAssistantShell" title="macOS Big Sur" start_enabled="true" start_selected="true">
+        <pkg-ref id="InstallAssistant"/>
+        <pkg-ref id="Info.plist"/>
+        <pkg-ref id="InstallInfo.plist"/>
+        <pkg-ref id="UpdateBrain.zip"/>
+        <pkg-ref id="BuildManifest.plist"/>
+    </choice>
+    <pkg-ref id="InstallAssistant" auth="root" installKBytes="36957" version="20.6.95">InstallAssistant.pkg</pkg-ref>
+    <pkg-ref id="MajorOSInfo" auth="root" installKBytes="2578" version="20.6.95">MajorOSInfo.pkg</pkg-ref>
+    <pkg-ref id="Info.plist" installKBytes="5" version="20.6.95">Info.plist</pkg-ref>
+    <pkg-ref id="InstallInfo.plist" installKBytes="0" version="20.6.95">InstallInfo.plist</pkg-ref>
+    <pkg-ref id="UpdateBrain.zip" installKBytes="1951" version="20.6.95">UpdateBrain.zip</pkg-ref>
+    <pkg-ref id="BuildManifest.plist" installKBytes="1610" version="20.6.95">BuildManifest.plist</pkg-ref>
+    <script for="volume-check/@script"><![CDATA[
+var volumeCheck = function()
+{
+    if ( my.target == undefined )
+    {
+        my.result.message = "The target is nil.";
+        my.result.type = 'Fatal';
+        return false;
+    }
+    
+    var myTargetSystemVersion = (my.target.systemVersion || system.files.plistAtPath(my.target.mountpoint + "/System/Library/CoreServices/SystemVersion.plist"));
+    var minimumSupportedVersion = "10.9";
+    
+    if ( system.compareVersions(myTargetSystemVersion, minimumSupportedVersion) < 0 )
+    {
+        my.result.message = "The target volume is less than the minimum supported version: " + minimumSupportedVersion;
+        my.result.type = 'Fatal';
+        return false;
+    }
+    return true;
+}
+volumeCheck();
+]]></script>
+    <installation-check script=""/>
+    <script for="installation-check/@script"><![CDATA[
+var installCheck = function()
+{
+    var cpuFeatures = system.sysctl( 'machdep.cpu.features' );
+    if ( cpuFeatures != undefined )
+    {
+        cpuFeatures=cpuFeatures.split(" ");
+        for ( var i = 0; i < cpuFeatures.length; i++ )
+        {
+            if ( cpuFeatures[i] == "VMM" )
+            {
+                return true;
+            }
+        }
+    }
+    
+    var supportedBoardIDs = ['Mac-C6F71043CEAA02A6', 'Mac-06F11F11946D27C5', 'Mac-53FDB3D8DB8CA971', 'Mac-E43C1C25D4880AD6', 'Mac-E1008331FDC96864', 'Mac-B4831CEBD52A0C4C', 'Mac-FA842E06C61E91C5', 'Mac-36B6B6DA9CFCD881', 'Mac-7BA5B2DFE22DDD8C', 'Mac-473D31EABEB93F9B', 'Mac-827FAC58A8FDFA22', 'Mac-A5C67F76ED83108C', 'Mac-65CE76090165799A', 'Mac-747B1AEFF11738BE', 'Mac-B809C3757DA9BB8D', 'Mac-BE088AF8C5EB4FA2', 'Mac-27AD2F918AE68F61', 'Mac-42FD25EABCABB274', 'Mac-112818653D3AABFC', 'Mac-CFF7D910A743CAAF', 'Mac-A61BADE1FDAD7B05', 'Mac-35C1E88140C3E6CF', 'Mac-5F9802EFE386AA28', 'Mac-112B0A653D3AAB9C', 'Mac-7DF21CB3ED6977E5', 'Mac-9F18E312C5C2BF0B', 'Mac-F305150B0C7DEEEF', 'Mac-9AE82516C7C6B903', 'Mac-DB15BD556843C820', 'Mac-F60DEB81FF30ACF6', 'Mac-77F17D7DA9285301', 'Mac-551B86E5744E2388', 'Mac-7BA5B2D9E42DDD94', 'Mac-226CB3C6A851A671', 'Mac-189A3D4F975D5FFC', 'Mac-2BD1B31983FE1663', 'Mac-AF89B6D9451A490B', 'Mac-937CB26E2E02BB01', 'Mac-66E35819EE2D0D05', 'Mac-937A206F2EE63C01', 'Mac-E7203C0F68AA0004', 'Mac-90BE64C3CB5A9AEB', 'Mac-9394BDF4BF862EE7', 'Mac-BE0E8AC46FE800CC', 'Mac-0CFF9C7C2B63DF8D', 'Mac-EE2EBD4B90B839A8', 'Mac-AA95B1DDAB278B95', 'Mac-CF21D135A7D34AA6', 'Mac-81E3E92DD6088272', 'Mac-5A49A77366F81C72', 'Mac-1E7E29AD0135F9BC', 'Mac-3CBD00234E554E41', 'Mac-63001698E7A34814', 'Mac-35C5E08120C7EEAF', 'Mac-50619A408DB004DA', 'Mac-827FB448E656EC26', 'Mac-CAD6701F7CEA0921', 'Mac-A369DDC4E67F1C45', 'Mac-06F11FD93F0323C5', 'Mac-4B682C642B45593E', 'Mac-FFE5EF870D7BA81A'];
+    
+    var supportedDeviceIDs = ['J274AP', 'J215AP', 'J456AP', 'J680AP', 'J230AP', 'J160AP', 'X86LEGACYAP', 'J214AP', 'X589AMLUAP', 'X589ICLYAP', 'J293AP', 'J213AP', 'J152FAP', 'J780AP', 'J132AP', 'J223AP', 'J185FAP', 'J185AP', 'VMM-x86_64', 'J174AP', 'J137AP', 'J214KAP', 'J230KAP', 'J140AAP', 'J313AP', 'J140KAP', 'J457AP'];
+    supportedDeviceIDs = supportedDeviceIDs.map(Function.prototype.call, String.prototype.toLowerCase);
+    
+    // Boolean to ensure that looking up a T2 system is supported
+    var bridgeOSLookupSupported = system.hasOwnProperty('bridge') && system.bridge.hasOwnProperty('deviceIdentity') &&  system.bridge.deviceIdentity.hasOwnProperty("hardwareModel") && system.bridge.hasOwnProperty('bridgeVersion') && system.bridge.hasOwnProperty('bridgeBuildGroup');
+    
+    // For modern hardware try out systems without BoardIDs.
+    var boardID = system.ioregistry.fromPath('IOService:/')['board-id'];
+    if ( boardID == undefined )
+    {
+        var hwTarget = system.sysctl("hw.target");
+        if ( hwTarget == undefined )
+        {
+            my.result.message = "The system has neither a boardID or a hw.target.";
+            my.result.type = 'Fatal';
+            return false;
+        }
+        else
+        {
+            if ( supportedDeviceIDs.indexOf(hwTarget.toLowerCase()) == -1 )
+            {
+                my.result.message = "The system is not in the supported deviceID list.";
+                my.result.type = 'Fatal';
+                return false;
+            }
+        }
+    }
+    // Next compare T2 devices against the list of supported deviceIDs.
+    // Non T2 systems will have a hardwareModel so also verify that the bridgeVersion is set
+    else if ( bridgeOSLookupSupported && system.bridge.deviceIdentity.hardwareModel != undefined && system.bridge.bridgeVersion != undefined )
+    {
+        var bridgeOSDeviceID = system.bridge.deviceIdentity.hardwareModel;
+        if ( supportedDeviceIDs.indexOf(bridgeOSDeviceID.toLowerCase()) == -1 )
+        {
+            my.result.message = "This T2 system is not in the supported deviceID list.";
+            my.result.type = 'Fatal';
+            return false;
+        }
+    }
+    // For legacy hardware T1 and older, we use boardIDs
+    else if ( supportedBoardIDs.indexOf(boardID) == -1 )
+    {
+        my.result.message = "The system is not in the supported boardID list.";
+        my.result.type = 'Fatal';
+        return false;
+    }
+    
+    return true;
+}
+installCheck();
+]]></script>
+</installer-gui-script>
