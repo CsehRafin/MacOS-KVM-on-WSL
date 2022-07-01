@@ -3,10 +3,12 @@ Download these packages on your system (ubuntu, alpine, arch,debain etc)
 
 qemu uml-utilities virt-manager git wget libguestfs-tools p7zip-full make dmg2img 
 
-##check for these System Requirements 
-* A modern Linux distribution. E.g. Ubuntu 20.04 LTS 64-bit or later.
+## Check for these System Requirements 
+* A modern Linux distribution. E.g. Ubuntu 20.04 LTS 64-bit or A LightWeight Linux distribution (arch, manjaro etc)
 
 * QEMU >= 4.2.0
+
+* 8-16 GB ram (WSL allocated 12 GB if 16 GB or WSL allocated 5-6 GB if 8 GB 
 
 * A CPU with Intel VT-x / AMD SVM support is required (`grep -e vmx -e svm /proc/cpuinfo`)
 
